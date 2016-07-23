@@ -1,0 +1,154 @@
+/*
+ * Created on 07-Sep-2004
+ * @author bandara
+ */
+package rmi;
+
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+import java.util.Arrays;
+import java.rmi.registry.*;
+import java.net.*;
+
+import common.*;
+
+/**
+ * @author bandara
+ *
+ */
+public class RMIServer extends UnicastRemoteObject implements RMIServerI {
+
+	private int totalMessages = -1;
+	private int[] receivedMessages;
+	
+	
+	public RMIServer() throws RemoteException {
+	}
+
+	public void receiveMessage(MessageInfo msg) throws RemoteException {          
+
+		// TO-DO: On receipt of first message, initialise the receive buffer
+		try {if(receivedMessages == null)
+		{
+			totalMessages = 0;
+			receivedMessages = new int[msg.totalMessages];
+			
+		}
+		// TO-DO: Log receipt of the messagecl
+		
+
+		receivedMessages[msg.messageNum-1] = 1;                           //sets value for this messageindex to 1 if received
+		totalMessages++;
+		
+		System.out.println("The Message with following number was received " + (msg.messageNum) );
+		// TO-DO: If this is the last expected message, then identify
+		//        any missing messages
+		
+		if(totalMessages == msg.totalMessages)
+		{
+		
+			if(receivedMessages == null || totalMessages <= 0)
+			{
+				System.out.println("all good!");
+				return;
+			}
+				
+			
+			if(totalMessages == receivedMessages.length)
+			{
+				System.out.println("no missing messages");
+			}
+			
+			for(int k = 0; k < receivedMessages.length; k++)
+			{
+				if(receivedMessages[k] != 1)                 //checking in array which index is not initialised to 1 = not received message
+				{
+				System.out.println("The Message with the following number was NOT received" + (k+1));
+				}
+			}	
+			
+			receivedMessages = null;
+			totalMessages = -1;
+		}
+		}
+		catch (Exception e)
+		{ 
+	    		System.out.println("Error" + e); 
+		} 
+
+	}
+
+
+	public static void main(String[] args) {
+
+		RMIServer rmis = null;
+
+	//printing IP to screen
+	try {
+		InetAddress address = InetAddress.getLocalHost();
+		String ipAddress = address.getHostAddress();
+		System.out.println("Host " + ipAddress);
+	}
+	catch(Exception e)
+	{
+		System.out.println("Error finding host address" + e);
+	}	
+
+	// TO-DO: Initialise Security Manager
+	try {
+	   	System.setSecurityManager(new SecurityManager());
+	    	System.out.println("Security manager initialised");
+	}
+	catch (Exception e)
+	{
+		System.out.println("Error initialising SecManager" + e);
+	}
+	
+	// TO-DO: Instantiate the server class
+	try {
+		rmis = new RMIServer();
+	   	System.out.println("Server class instantiated");
+	}
+	catch(Exception e)
+	{
+		System.out.println("Error instantiating server class: " + e);
+	}
+	
+	// TO-DO: Bind to RMI registry
+	try {
+		rebindServer("RMIServer", rmis);
+		System.out.println("Bind to RMI registry succesful");
+	}
+	catch(Exception e)
+	{
+		System.out.println("Error binding RMIServer" + e);
+	}
+
+    }
+
+	protected static void rebindServer(String serverURL, RMIServer server) {
+
+		// TO-DO:
+		// Start / find the registry (hint use LocateRegistry.createRegistry(...)
+		// If we *know* the registry is running we could skip this (eg run rmiregistry in the start script)
+
+		// TO-DO:
+		// Now rebind the server to the registry (rebind replaces any existing servers bound to the serverURL)
+		// Note - Registry.rebind (as returned by createRegistry / getRegistry) does something similar but
+		// expects different things from the URL field.
+
+
+	try{
+		LocateRegistry.createRegistry(1099).rebind(serverURL, server);
+	} 
+	catch(Exception e)
+	{						      
+	    	System.out.println("Exception rebinding server: " + e);
+	}
+
+
+   }
+}
